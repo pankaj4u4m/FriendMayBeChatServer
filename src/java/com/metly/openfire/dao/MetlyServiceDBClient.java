@@ -19,7 +19,9 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 	
 	private final String USER_CORDINATES;
 	
-	private final String INSERT_USER_CONNECTION_STATUESE;
+	private final String INSERT_USER_CONNECTION_STATUSES;
+	
+	private final String DELETE_USER_CONNECTION_STATUSES;
 
 	public MetlyServiceDBClient(){
 		 NEAR_USERS = "SELECT u.xmpp, l.created_at FROM  " +
@@ -31,8 +33,11 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 				 ApplicationProperties.getProperty("metly.login_locations_db") + " l JOIN " + ApplicationProperties.getProperty("metly.users_db") + " u ON u.id=l.login_id  " +
 							"WHERE xmpp=? AND resource=? ORDER BY l.created_at DESC";
 		 
-		 INSERT_USER_CONNECTION_STATUESE = "INSERT INTO " + ApplicationProperties.getProperty("metly.user_connection_statuses_db") + 
-					"(user_id, stranger_id, user_status, created_at, updated_at) VALUES(?, ?, ?, ?, ?)";
+		 INSERT_USER_CONNECTION_STATUSES = "INSERT INTO " + ApplicationProperties.getProperty("metly.user_connection_statuses_db") + 
+					"(user_id, stranger_id, user_status, match_key, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)";
+		 
+		 DELETE_USER_CONNECTION_STATUSES = "DELETE FROM " + ApplicationProperties.getProperty("metly.user_connection_statuses_db") +
+				 	" WHERE match_key=?";
 		 
 	}
     @Override
@@ -40,17 +45,17 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
     	Point point = this.getCordinates(userJID);
     	boolean connected = false;
     	if(!connected){
-    		waitUser(userJID);
+    		waitUser(userJID, systemJID);
     	}
         return new MetlyUser("pankaj@localhost/f74317ec");
     }
     
-	private void waitUser(String userJID) {
+	private void waitUser(String userJID, String systemJID) {
 		Connection connection = null;
         PreparedStatement prepareStatement = null;
         try {
             connection = DbConnectionManager.getConnection();
-            prepareStatement = connection.prepareStatement(INSERT_USER_CONNECTION_STATUESE);
+            prepareStatement = connection.prepareStatement(INSERT_USER_CONNECTION_STATUSES);
             
             Long userId;
             if((userId = this.getUserId(new JID(userJID)))!= null ){
@@ -58,15 +63,16 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             } else {
             	prepareStatement.setNull(1, java.sql.Types.BIGINT);
             }
-            
+            prepareStatement.setNull(2, java.sql.Types.BIGINT);
             prepareStatement.setString(3, "W");
+            prepareStatement.setString(4, userJID + systemJID);
             java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
             prepareStatement.setDate(5, date);
             prepareStatement.setDate(6, date);
             
             prepareStatement.execute();
         } catch (SQLException e) {
-            throw new MetlyException("Error on saving user_statuses:" + userJID, e);
+            throw new MetlyException("Error on saving user_statuses:"+ userJID + ", " + systemJID + " , SQL:\n" + INSERT_USER_CONNECTION_STATUSES, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
@@ -87,7 +93,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 			} 
 			return new Point(0, 0);
         } catch (SQLException e) {
-            throw new MetlyException("Error on getting user cordinates:" + userJID, e);
+            throw new MetlyException("Error on getting user cordinates:" + userJID +  " , SQL:\n" + USER_CORDINATES, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
@@ -98,6 +104,23 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
         return new MetlyUser("pankaj@localhost/f74317ec");
     }
     
+	@Override
+	public void clearMapping(String userJID, String systemJID) {
+		Connection connection = null;
+        PreparedStatement prepareStatement = null;
+        try {
+            connection = DbConnectionManager.getConnection();
+            prepareStatement = connection.prepareStatement(DELETE_USER_CONNECTION_STATUSES);
+            prepareStatement.setString(1, userJID + systemJID);
+            
+            prepareStatement.execute();
+        } catch (SQLException e) {
+            throw new MetlyException("Error on DELETE user_statuses:" + userJID + ", " + systemJID + " , SQL:\n" + DELETE_USER_CONNECTION_STATUSES, e);
+        } finally {
+            DbConnectionManager.closeConnection(prepareStatement, connection);
+        }
+	}
+	
 	static class Point{
 		private double x;
 		private double y;

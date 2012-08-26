@@ -42,7 +42,7 @@ public class PacketProcessor implements PacketReceiver {
     @Override
     public void receivePacket(Packet packet, Session session, boolean incoming, boolean processed) {
         
-    	if(processed){
+    	if(packet == null || processed){
             return;
         }
     	log.info("{Packet Received:" + packet + ", incoming:" + incoming + " processed:"

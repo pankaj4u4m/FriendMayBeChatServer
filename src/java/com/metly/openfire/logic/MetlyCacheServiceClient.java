@@ -1,6 +1,8 @@
 package com.metly.openfire.logic;
 
 import org.apache.log4j.Logger;
+import org.xmpp.packet.JID;
+
 import com.metly.openfire.cache.Cache;
 import com.metly.openfire.cache.HashMapCache;
 
@@ -27,7 +29,6 @@ public class MetlyCacheServiceClient implements MetlyServiceClient{
             log.error("Error on cache GET key:" + userJID + systemJID);
         }
         if (get == null){
-            //get = this.client.getMatchedStranger(jid);
             user = client.getMatchedStranger(userJID, systemJID);
             try {
                 cache.set(userJID + systemJID , MetlyUser.getJSONString(user));
@@ -51,4 +52,14 @@ public class MetlyCacheServiceClient implements MetlyServiceClient{
         return metlyUser;
         
     }
+
+    @Override
+	public void clearMapping(String userJID, String systemJID) {
+    	try {
+            cache.delete(userJID + systemJID);
+        } catch (Exception e) {
+            log.error("Error on cache DELETE key:" + userJID + systemJID, e);
+        }
+		this.client.clearMapping(userJID, systemJID);
+	}
 }

@@ -30,7 +30,9 @@ public class MessageProcessor {
 	}
 
 	public void process(Message packet) {
-		
+		if(packet.getBody() == null){
+			return;
+		}
 		this.messageDB.save(packet);
 		JID to = packet.getTo();
 		
@@ -56,15 +58,20 @@ public class MessageProcessor {
 	}
 
 	private void disconnectCommand(Message packet, boolean isAnonymous) {
+		JID userJID = packet.getFrom();
+		JID systemJID = packet.getTo();
+
+		// acknowledge him that metlyCacheServiceClient is connected
+		packet.setTo(userJID);
+		packet.setFrom(systemJID);
+		packet.setType(Message.Type.error);
+		
 		if(isAnonymous){
-			JID userJID = packet.getFrom();
-
-			// acknowledge him that metlyCacheServiceClient is connected
-			packet.setTo(userJID);
-			packet.setFrom(userJID);
-
+			packet.setBody(" -Disconnected");
+			metlyCacheServiceClient.clearMapping(userJID.toString(), systemJID.toString());
+		} else {
+			packet.setBody(" -You can't Disconnect from Remembered users");
 		}
-		log.info("disconnected!");
 	}
 
 	private void anonymousMessage(Message packet) {
@@ -83,11 +90,16 @@ public class MessageProcessor {
 		if (clientSession != null) {
 			log.info("sending to stranger:" + packet);
 			clientSession.process(packet);
+			throw new MetlyHappyException();
 		} else {
 			log.error("no session for user:" + stranger);
-			disconnectCommand(packet, true);
+
+			// acknowledge him that metlyCacheServiceClient is connected
+			packet.setTo(userJID);
+			packet.setFrom(systemJID);
+			packet.setType(Message.Type.error);
+			packet.setBody(" -You have been disconnected from Stranger. Try \\c");
 		}
-		throw new MetlyHappyException();
 	}
 
 	private void connectCommand(Message packet, boolean isAnonymous) {

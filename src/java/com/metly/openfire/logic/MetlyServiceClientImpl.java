@@ -64,4 +64,10 @@ public class MetlyServiceClientImpl implements MetlyServiceClient{
             post.releaseConnection();
         }
     }
+
+	@Override
+	public void clearMapping(String userJID, String systemJID) {
+		// TODO Auto-generated method stub
+		
+	}
 }

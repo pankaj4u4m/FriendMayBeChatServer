@@ -22,7 +22,7 @@ public class Commands {
 //        COMMANDS.put("\\help", Commands.HELP);
 //        COMMANDS.put("\\h", Commands.HELP);
 //        DESCRIPTION.put(Commands.HELP, "\\h -List all available commands");
-        COMMANDS.put("\\connect", Commands.CONNECT);
+        COMMANDS.put("\\C", Commands.CONNECT);
         COMMANDS.put("\\c", Commands.CONNECT);
         DESCRIPTION.put(Commands.CONNECT, "\\c -Connect to an anonymous user");
 //        COMMANDS.put("\\block", Commands.BLOCK); //removed from list as it needs reason too
@@ -34,7 +34,7 @@ public class Commands {
 //        COMMANDS.put("\\forget", Commands.FORGET);
 //        COMMANDS.put("\\f", Commands.FORGET);
 //        DESCRIPTION.put(Commands.FORGET, "\\f -Forget this user");
-        COMMANDS.put("\\disconnect", Commands.DISCONNECT);
+        COMMANDS.put("\\D", Commands.DISCONNECT);
         COMMANDS.put("\\d", Commands.DISCONNECT);
         DESCRIPTION.put(Commands.DISCONNECT, "\\d -Disconnect this user");
         
