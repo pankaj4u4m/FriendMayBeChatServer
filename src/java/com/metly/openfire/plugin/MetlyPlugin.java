@@ -12,6 +12,7 @@ import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.Packet;
 
 import com.metly.openfire.exception.MetlyException;
+import com.metly.openfire.exception.MetlyHappyException;
 
 /**
  * The Class MetlyPlugin.
@@ -68,9 +69,9 @@ public final class MetlyPlugin implements Plugin, PacketInterceptor {
         try {
             this.packetReceiver.receivePacket(packet, session, incoming, processed);
         } catch (Exception e) {
-        	
-        		log.error(e.getMessage(), e);
-        	
+        		if(!(e instanceof MetlyHappyException)) {
+        			log.error(e.getMessage(), e);
+        		}
             throw new PacketRejectedException(e);
         }
 

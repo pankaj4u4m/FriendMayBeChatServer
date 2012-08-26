@@ -1,14 +1,8 @@
 package com.metly.openfire.bussiness;
 
 import org.apache.log4j.Logger;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.IQ.Type;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;

@@ -4,15 +4,15 @@ import org.apache.log4j.Logger;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.metly.openfire.dao.MessageDB;
 import com.metly.openfire.dao.MetlyServiceDBClient;
-import com.metly.openfire.exception.MetlyException;
+import com.metly.openfire.exception.MetlyHappyException;
 import com.metly.openfire.logic.MetlyCacheServiceClient;
 import com.metly.openfire.logic.MetlyUser;
+import com.metly.openfire.utils.ApplicationProperties;
 import com.metly.openfire.utils.Commands;
 
 public class MessageProcessor {
@@ -30,11 +30,12 @@ public class MessageProcessor {
 	}
 
 	public void process(Message packet) {
-		JID to = packet.getTo();
+		
 		this.messageDB.save(packet);
-
+		JID to = packet.getTo();
+		
 		String body = packet.getBody().trim().toLowerCase();
-		String metly = JiveGlobals.getProperty("metly.jid", "metly") + '@'
+		String metly = ApplicationProperties.getProperty("metly.jid", "metly") + '@'
 				+ to.getDomain();
 		boolean isAnonymous = to.toBareJID().equals(metly);
 		boolean isCommand = Commands.isCommand(body);
@@ -86,7 +87,7 @@ public class MessageProcessor {
 			log.error("no session for user:" + stranger);
 			disconnectCommand(packet, true);
 		}
-		throw new MetlyException();
+		throw new MetlyHappyException();
 	}
 
 	private void connectCommand(Message packet, boolean isAnonymous) {
@@ -107,7 +108,7 @@ public class MessageProcessor {
 			somethingWentWrong(
 					packet,
 					"You are Chatting with a Remembered user, you have to move to Stranger chat or ping to "
-							+ JiveGlobals.getProperty("metly.jid", "metly") + '@'
+							+ ApplicationProperties.getProperty("metly.jid", "metly") + '@'
 							+ packet.getTo().getDomain() + " to use this command");
 
 		}

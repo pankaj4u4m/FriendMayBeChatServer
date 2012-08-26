@@ -5,24 +5,38 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.IQ;
 
 import com.metly.openfire.exception.MetlyException;
+import com.metly.openfire.utils.ApplicationProperties;
 
 public class IQDB extends AbstractDB{
-    private static final String INSERT_NEW_IQ="INSERT INTO "
-			+ JiveGlobals.getProperty("metly.stanza_archives_db") + "(sender_id, receiver_id, stanza_type, stanza, created_at, updated_at)" +
-    		"VALUES(?, ?, ?, ?, ?, ?)";
+    private final String INSERT_NEW_IQ;
     
+    public IQDB(){
+    	super();
+    	INSERT_NEW_IQ="INSERT INTO "
+    			+ ApplicationProperties.getProperty("metly.stanza_archives_db") + "(sender_id, receiver_id, stanza_type, stanza, created_at, updated_at)" +
+        		"VALUES(?, ?, ?, ?, ?, ?)";
+    }
     public void save(IQ packet){
         Connection connection = null;
         PreparedStatement prepareStatement = null;
         try {
             connection = DbConnectionManager.getConnection();
             prepareStatement = connection.prepareStatement(INSERT_NEW_IQ);
-            prepareStatement.setLong(1, this.getUserId(packet.getFrom()));
-            prepareStatement.setLong(2, this.getUserId(packet.getTo()));
+            Long userId;
+            if((userId = this.getUserId(packet.getFrom()))!= null ){
+            	prepareStatement.setLong(1, userId);
+            } else {
+            	prepareStatement.setNull(1, java.sql.Types.BIGINT);
+            }
+            if((userId = this.getUserId(packet.getTo()))!= null ){
+            	prepareStatement.setLong(2, userId);
+            } else {
+            	prepareStatement.setNull(2, java.sql.Types.BIGINT);
+            }
+            
             prepareStatement.setString(3, "IQ");
             prepareStatement.setString(4, packet.toString());
             java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
@@ -31,7 +45,7 @@ public class IQDB extends AbstractDB{
             
             prepareStatement.execute();
         } catch (SQLException e) {
-            throw new MetlyException("Error on saving message:" + packet, e);
+            throw new MetlyException("Error on saving message:" + packet+ ", SQL:\n" +INSERT_NEW_IQ, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
