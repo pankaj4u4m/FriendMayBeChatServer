@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <!-- Main plugin class -->
+    <class>com.metly.openfire.plugin.MetlyPlugin</class>
+
+
+    <name>Metly Plugin</name>
+    <description>All usecase for Metly</description>
+    <author>Metly</author>
+    <version>1.0</version>
+    <date>5/8/2012</date>
+    <minServerVersion>3.7.0</minServerVersion>
+    <databaseKey>metly</databaseKey>
+    <databaseVersion>0</databaseVersion>
+
+    <!-- Admin console entries -->
+
+    <adminconsole>
+        
+    </adminconsole>
+</plugin>
