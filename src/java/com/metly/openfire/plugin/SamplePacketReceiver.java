@@ -1,4 +1,3 @@
-
 package com.metly.openfire.plugin;
 
 import org.apache.log4j.Logger;
@@ -7,10 +6,11 @@ import org.xmpp.packet.Packet;
 
 /**
  * The Class SamplePacketReceiver.
+ * 
  * @author kpankaj
  */
 public class SamplePacketReceiver implements PacketReceiver {
-    
+
     /** The Constant log. */
     private static final Logger log = Logger.getLogger(SamplePacketReceiver.class);
 

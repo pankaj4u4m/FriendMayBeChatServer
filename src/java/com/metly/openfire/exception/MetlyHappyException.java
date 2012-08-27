@@ -1,7 +1,7 @@
 package com.metly.openfire.exception;
 
-public class MetlyHappyException extends RuntimeException{
-	public MetlyHappyException(String message, Throwable e) {
+public class MetlyHappyException extends RuntimeException {
+    public MetlyHappyException(String message, Throwable e) {
         super(message);
         initCause(e);
     }

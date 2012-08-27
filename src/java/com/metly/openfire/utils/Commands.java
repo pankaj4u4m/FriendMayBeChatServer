@@ -6,18 +6,17 @@ import java.util.Map.Entry;
 import java.util.TreeSet;
 
 public class Commands {
-	
-    private static final Map<String, String> DESCRIPTION = new HashMap< String, String >();
-    private static final Map<String, String> COMMANDS = new HashMap< String, String >();
-    
+
+    private static final Map< String, String > DESCRIPTION = new HashMap< String, String >();
+    private static final Map< String, String > COMMANDS = new HashMap< String, String >();
+
 //    public static final String HELP = "help";
     public static final String CONNECT = "connect";
 //    public static final String BLOCK = "block";
 //    public static final String REMEMBER = "remember";
 //    public static final String FORGET = "forget";
     public static final String DISCONNECT = "disconnect";
-    
-    
+
     static {
 //        COMMANDS.put("\\help", Commands.HELP);
 //        COMMANDS.put("\\h", Commands.HELP);
@@ -37,14 +36,14 @@ public class Commands {
         COMMANDS.put("\\D", Commands.DISCONNECT);
         COMMANDS.put("\\d", Commands.DISCONNECT);
         DESCRIPTION.put(Commands.DISCONNECT, "\\d -Disconnect this user");
-        
+
     }
 
     public static boolean isCommand(String command) {
         return getCommand(command) != null;
     }
-    
-    public static String getCommand(String command){
+
+    public static String getCommand(String command) {
         String cmd = COMMANDS.get(command);
 //        if( cmd == null){
 //        	if(command.startsWith("\\r")){
@@ -55,10 +54,10 @@ public class Commands {
 //        }
         return cmd;
     }
-    
-    public static String getCommandHelp(){
+
+    public static String getCommandHelp() {
         StringBuilder builder = new StringBuilder("\n");
-        for(Entry< String, String > entry: DESCRIPTION.entrySet()){
+        for (Entry< String, String > entry : DESCRIPTION.entrySet()) {
             builder.append(entry.getValue()).append("\n");
         }
         return builder.toString();

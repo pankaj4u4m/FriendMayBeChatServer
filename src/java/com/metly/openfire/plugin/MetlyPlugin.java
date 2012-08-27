@@ -16,10 +16,11 @@ import com.metly.openfire.exception.MetlyHappyException;
 
 /**
  * The Class MetlyPlugin.
+ * 
  * @author kpankaj
  */
 public final class MetlyPlugin implements Plugin, PacketInterceptor {
-    
+
     /** The Constant log. */
     private static final Logger log = Logger.getLogger(MetlyPlugin.class);
 
@@ -41,7 +42,7 @@ public final class MetlyPlugin implements Plugin, PacketInterceptor {
     }
 
     /**
-     * {@inheritDoc} 
+     * {@inheritDoc}
      */
     @Override
     public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
@@ -69,9 +70,9 @@ public final class MetlyPlugin implements Plugin, PacketInterceptor {
         try {
             this.packetReceiver.receivePacket(packet, session, incoming, processed);
         } catch (Exception e) {
-        		if(!(e instanceof MetlyHappyException)) {
-        			log.error(e.getMessage(), e);
-        		}
+            if (!(e instanceof MetlyHappyException)) {
+                log.error(e.getMessage(), e);
+            }
             throw new PacketRejectedException(e);
         }
 
@@ -79,7 +80,7 @@ public final class MetlyPlugin implements Plugin, PacketInterceptor {
 
     /**
      * Gets the plugin manager.
-     *
+     * 
      * @return the plugin manager
      */
     public static PluginManager getPluginManager() {

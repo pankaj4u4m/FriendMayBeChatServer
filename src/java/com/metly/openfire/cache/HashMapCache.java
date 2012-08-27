@@ -1,24 +1,39 @@
 package com.metly.openfire.cache;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class HashMapCache implements Cache{
-    static class CacheValue{
+import org.apache.log4j.Logger;
+import org.eclipse.jetty.util.log.Log;
+
+public class HashMapCache implements Cache {
+    private static final Logger log = Logger.getLogger(HashMapCache.class);
+    static class CacheValue {
         public Object object;
         public Date expiry;
-        public CacheValue(Object obj){
+
+        public CacheValue(Object obj) {
             object = obj;
             expiry = new Date(new Date().getTime() + 100000000);
         }
-        public CacheValue(Object obj, Date exp){
+
+        public CacheValue(Object obj, Date exp) {
             object = obj;
             expiry = exp;
         }
     }
-    private static final Map<String, CacheValue> cache = new ConcurrentHashMap< String, CacheValue >(100);
-    
+
+    @SuppressWarnings({ "serial" })
+    private static final Map< String, CacheValue > cache = new LinkedHashMap<String, CacheValue>(){
+        private final int maxEntries = 100;
+
+        protected boolean removeEldestEntry(final Map.Entry<String, CacheValue> eldest) {
+            return this.size() > maxEntries;
+        }
+
+    };
+
     @Override
     public void set(String key, Object value) {
         cache.put(key, new CacheValue(value));
@@ -34,14 +49,14 @@ public class HashMapCache implements Cache{
         long ret = 0;
         synchronized (cache) {
             CacheValue value = cache.get(key);
-            if(value == null){
+            if (value == null) {
                 value = new CacheValue(0);
                 cache.put(key, value);
             }
             value.object = ret = new Integer(value.object.toString()) - 1;
         }
         return ret;
-       
+
     }
 
     @Override
@@ -49,7 +64,7 @@ public class HashMapCache implements Cache{
         long ret = 0;
         synchronized (cache) {
             CacheValue value = cache.get(key);
-            if(value == null){
+            if (value == null) {
                 value = new CacheValue(0);
                 cache.put(key, value);
             }
@@ -63,7 +78,7 @@ public class HashMapCache implements Cache{
         long ret = 0;
         synchronized (cache) {
             CacheValue value = cache.get(key);
-            if(value == null){
+            if (value == null) {
                 value = new CacheValue(0);
                 cache.put(key, value);
             }
@@ -77,7 +92,7 @@ public class HashMapCache implements Cache{
         long ret = 0;
         synchronized (cache) {
             CacheValue value = cache.get(key);
-            if(value == null){
+            if (value == null) {
                 value = new CacheValue(0);
                 cache.put(key, value);
             }
@@ -95,7 +110,7 @@ public class HashMapCache implements Cache{
     @Override
     public boolean delete(String key, Date expiry) {
         CacheValue value = cache.get(key);
-        if (value == null || value.expiry.compareTo(expiry) < 0){
+        if (value == null || value.expiry.compareTo(expiry) < 0) {
             cache.remove(key);
             return false;
         }
@@ -106,15 +121,14 @@ public class HashMapCache implements Cache{
     @Override
     public Object get(String key) {
         CacheValue value = cache.get(key);
-        if(value == null){
+        if (value == null) {
             return null;
         }
-        if (value.expiry.compareTo(new Date()) < 0){
+        if (value.expiry.compareTo(new Date()) < 0) {
             return null;
         }
         return value.object;
     }
-
 
     @Override
     public boolean keyExists(String key) {

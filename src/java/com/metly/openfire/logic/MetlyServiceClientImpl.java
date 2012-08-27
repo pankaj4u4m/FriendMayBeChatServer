@@ -25,12 +25,11 @@ public class MetlyServiceClientImpl implements MetlyServiceClient{
     
     
     @Override
-    public MetlyUser getMatchedStranger(String userJID, String systemJID) {
+    public MetlyUser getMatchedStranger(String userJID) {
         // and then from inside some thread executing method
         PostMethod post = new PostMethod("http://metly.com/");
         try {
             post.addParameter("userJID", userJID);
-            post.addParameter("systemJID", systemJID);
             client.executeMethod(post);
             return new MetlyUser( post.getResponseBodyAsString());
         } catch (HttpException e) {
@@ -46,12 +45,11 @@ public class MetlyServiceClientImpl implements MetlyServiceClient{
     }
 
     @Override
-    public MetlyUser getNewStranger(String userJID, String systemJID) {
+    public MetlyUser getNewStranger(String userJID) {
      // and then from inside some thread executing method
         PostMethod post = new PostMethod("http://metly.com/");
         try {
             post.addParameter("userJID", userJID);
-            post.addParameter("systemJID", systemJID);
             client.executeMethod(post);
             return new MetlyUser(post.getResponseBodyAsString());
         } catch (HttpException e) {
@@ -66,7 +64,7 @@ public class MetlyServiceClientImpl implements MetlyServiceClient{
     }
 
 	@Override
-	public void clearMapping(String userJID, String systemJID) {
+	public void clearMapping(String userJID) {
 		// TODO Auto-generated method stub
 		
 	}

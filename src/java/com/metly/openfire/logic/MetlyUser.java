@@ -12,25 +12,27 @@ import com.metly.openfire.exception.MetlyException;
 public class MetlyUser {
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    private Long id;
     private String jid;
     private String name;
-    private String age;
+    private String DOB;
     private String location;
     private String gender;
     private String connectedWith;
     private String status;
+    private String systemJID;
 
-    public MetlyUser(){
-    	
+    public MetlyUser() {
+
     }
-    
-    public MetlyUser(String jid){
+
+    public MetlyUser(String jid) {
         this.jid = jid;
     }
-    
-    public static MetlyUser getUserFromJSON(String jsonString){
+
+    public static MetlyUser getUserFromJSON(String jsonString) {
         try {
-           return mapper.readValue(jsonString, MetlyUser.class);
+            return mapper.readValue(jsonString, MetlyUser.class);
         } catch (JsonProcessingException e) {
             throw new MetlyException(e);
         } catch (IOException e) {
@@ -62,7 +64,7 @@ public class MetlyUser {
         return jid;
     }
 
-    public void setJid(String jid) {
+    public void setJID(String jid) {
         this.jid = jid;
     }
 
@@ -72,14 +74,6 @@ public class MetlyUser {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getAge() {
-        return age;
-    }
-
-    public void setAge(String age) {
-        this.age = age;
     }
 
     public String getLocation() {
@@ -104,6 +98,30 @@ public class MetlyUser {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getDOB() {
+        return DOB;
+    }
+
+    public void setDOB(String dOB) {
+        DOB = dOB;
+    }
+
+    public String getSystemJID() {
+        return systemJID;
+    }
+
+    public void setSystemJID(String systemJID) {
+        this.systemJID = systemJID;
     }
 
 }
