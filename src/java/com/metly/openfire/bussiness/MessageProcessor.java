@@ -1,5 +1,9 @@
 package com.metly.openfire.bussiness;
 
+import java.util.Calendar;
+import java.util.Date;
+
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.SessionManager;
@@ -139,7 +143,7 @@ public class MessageProcessor {
             packet.setFrom(systemJID);
 
             if(stranger == null){
-                packet.setBody("Unable to connect. Please try again!.\\c");
+                packet.setBody("We are not able to connect any Stranger. Please try again!. \\c");
                 packet.setType(Message.Type.error);
             }else {
                 packet.setBody(getFormatedJSON(stranger));
@@ -171,7 +175,13 @@ public class MessageProcessor {
                 builder.append("Name: ").append(stranger.getName()).append("\n");
             }
             if(stranger.getDOB() != null){
-                builder.append("DOB: ").append(stranger.getDOB()).append("\n");
+                try {
+                    int year = Calendar.getInstance().get(Calendar.YEAR);
+                    int userYear = Integer.parseInt(stranger.getDOB().split("-")[0]);
+                    builder.append("Age: ").append(year - userYear).append("\n");
+                } catch (NumberFormatException e) {
+                    log.error(e);
+                }
             }
             if(stranger.getGender() != null){
                 builder.append("Gender: ").append(stranger.getGender()).append("\n");

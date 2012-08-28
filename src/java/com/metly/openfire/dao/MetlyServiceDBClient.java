@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Random;
 
 import org.apache.log4j.Logger;
 import org.jivesoftware.database.DbConnectionManager;
@@ -34,6 +35,9 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 
     private final String GET_MATCHED_USER_FOR_STRANGER_JID;
 
+    private final String LOCK_RANDOM_STRANGER;
+
+    private static final Random random = new Random();
 
     private static final Cache cache = new HashMapCache();
 
@@ -44,10 +48,11 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + ApplicationProperties.getProperty("metly.users_db") + " u ON u.id=l.login_id "
                         + " WHERE xmpp=? AND resource=? ORDER BY l.created_at DESC";
 
+        //TODO: filter already connected user very recently
         LOCK_STRANGER =
                 "UPDATE "
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
-                        + " su SET su.user_status=?, su.stranger_id=?, su.stranger_jid=?, su.updated_at=?"
+                        + " su SET su.user_status=?, su.stranger_id=?, su.stranger_jid=?, su.updated_at=? "
                         + " WHERE su.user_id in (SELECT * FROM (SELECT id from (SELECT u.id, s.created_at FROM "
                         + ApplicationProperties.getProperty("metly.login_locations_db")
                         + " l JOIN "
@@ -56,20 +61,32 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " s ON u.id=s.user_id WHERE user_status='W' AND s.user_id <> ? AND  TIMESTAMPDIFF(SECOND, ?, s.created_at) < "
                         + (MAX_WAIT_TIME - 2)
-                        + " ORDER BY POW(X(location) - ?, 2) + POW(Y(location) - ?, 2) ASC LIMIT 200) AS r"
-                        + " ORDER BY created_at ASC LIMIT 1) AS t)";
+                        + " ORDER BY POW(X(location) - ?, 2) + POW(Y(location) - ?, 2) ASC LIMIT 1000) AS r "
+                        + " ORDER BY created_at ASC LIMIT 1) AS t) ";
+
+        LOCK_RANDOM_STRANGER =
+                "UPDATE " + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
+                        + " su SET su.user_status=?, su.stranger_id=?, su.stranger_jid=?, su.updated_at=? "
+                        + " WHERE su.user_id in (SELECT * FROM (SELECT id from "
+                        + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
+                        + " WHERE user_status='W' AND user_id <> ? AND  TIMESTAMPDIFF(SECOND, ?, created_at) < "
+                        + (MAX_WAIT_TIME - 2) + " ORDER BY created_at ASC LIMIT 1) AS t) ";
 
         GET_MATCHED_USER_FOR_STRANGER_JID =
                 "SELECT u.id, user_jid, name, birthday, gender FROM "
-                        + ApplicationProperties.getProperty("metly.users_db") + " u JOIN "
-                        + ApplicationProperties.getProperty("metly.user_details_db" ) + " d ON u.id=d.user_id JOIN "
+                        + ApplicationProperties.getProperty("metly.users_db")
+                        + " u JOIN "
+                        + ApplicationProperties.getProperty("metly.user_details_db")
+                        + " d ON u.id=d.user_id JOIN "
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " s ON u.id=s.user_id WHERE user_status='C' AND stranger_jid=? AND s.updated_at=? ORDER BY s.created_at DESC LIMIT 1";
 
         GET_MATCHED_USER_FOR_USER_JID =
                 "SELECT u.id, stranger_jid, name, birthday, gender FROM "
-                        + ApplicationProperties.getProperty("metly.users_db") + " u JOIN "
-                        + ApplicationProperties.getProperty("metly.user_details_db" ) + " d ON u.id=d.user_id JOIN "
+                        + ApplicationProperties.getProperty("metly.users_db")
+                        + " u JOIN "
+                        + ApplicationProperties.getProperty("metly.user_details_db")
+                        + " d ON u.id=d.user_id JOIN "
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " s ON u.id=s.stranger_id WHERE user_status='C' AND user_jid=? ORDER BY s.created_at DESC LIMIT 1";
 
@@ -79,7 +96,8 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + " (user_id, user_jid, user_status, stranger_id, stranger_jid, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?)";
 
         DELETE_USER_CONNECTION_STATUSES =
-                "DELETE FROM " + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
+                "DELETE FROM "
+                        + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " WHERE user_jid=? OR stranger_jid=? OR ( user_status='W' AND TIMESTAMPDIFF(SECOND, ?, created_at) > "
                         + MAX_WAIT_TIME + " ) OR TIMESTAMPDIFF(DAY, ?, updated_at) > 1";
 
@@ -90,15 +108,15 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
         try {
             clearMapping(userJID);
             Object get = cache.get(userJID);
-            if (get != null && !get.equals("null")){
+            if (get != null && !get.equals("null")) {
                 log.info(get.getClass());
-                cache.delete(MetlyUser.getUserFromJSON((String)get).getJID());
+                cache.delete(MetlyUser.getUserFromJSON((String) get).getJID());
             }
             cache.delete(userJID);
         } catch (Exception e) {
             log.error("unable to DELETE cache key:" + userJID, e);
         }
-        
+
         MetlyUser stranger = this.matchUser(userJID);
         if (stranger == null) {
             waitUser(userJID);
@@ -123,14 +141,14 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
         if (stranger != null) {
             setMatchedStrangerForUser(userJID, stranger);
             MetlyUser user = getMatchedStranger(stranger.getJID());
-            if(user != null){
+            if (user != null) {
                 try {
                     cache.set(stranger.getJID(), MetlyUser.getJSONString(user));
                     cache.set(user.getJID(), MetlyUser.getJSONString(stranger));
                 } catch (Exception e) {
                     log.error("Error on cache SET key:" + userJID, e);
                 }
-                
+
                 return stranger;
             }
         }
@@ -154,7 +172,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             prepareStatement.setString(3, "C");
             prepareStatement.setLong(4, stranger.getId());
             prepareStatement.setString(5, stranger.getJID());
-            
+
             java.sql.Timestamp dateTime = new java.sql.Timestamp(System.currentTimeMillis());
             prepareStatement.setTimestamp(6, dateTime);
             prepareStatement.setTimestamp(7, dateTime);
@@ -178,7 +196,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             prepareStatement.setString(1, strangerJID);
             prepareStatement.setTimestamp(2, lockDateTime);
             ResultSet result = prepareStatement.executeQuery();
-            
+
             if (result.next()) {
                 MetlyUser metlyUser = new MetlyUser();
                 metlyUser.setId(result.getLong(1));
@@ -192,7 +210,8 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             return null;
 
         } catch (SQLException e) {
-            throw new MetlyException("Error on LOCK USER" + strangerJID + " , SQL:\n" + GET_MATCHED_USER_FOR_STRANGER_JID, e);
+            throw new MetlyException("Error on LOCK USER" + strangerJID + " , SQL:\n"
+                    + GET_MATCHED_USER_FOR_STRANGER_JID, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
@@ -203,8 +222,12 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
         PreparedStatement prepareStatement = null;
         try {
             connection = DbConnectionManager.getConnection();
-            prepareStatement = connection.prepareStatement(LOCK_STRANGER);
-
+            int rand = random.nextInt(100);
+            if (rand < 50) {
+                prepareStatement = connection.prepareStatement(LOCK_STRANGER);
+            } else {
+                prepareStatement = connection.prepareStatement(LOCK_RANDOM_STRANGER);
+            }
             prepareStatement.setString(1, "C");
 
             Long userId;
@@ -222,14 +245,15 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             java.sql.Timestamp dateTime = new java.sql.Timestamp(System.currentTimeMillis());
             prepareStatement.setTimestamp(4, dateTime);
             prepareStatement.setTimestamp(6, dateTime);
-            prepareStatement.setDouble(7, point.x);
-            prepareStatement.setDouble(8, point.y);
+            if (rand < 50) {
+                prepareStatement.setDouble(7, point.x);
+                prepareStatement.setDouble(8, point.y);
+            }
 
             prepareStatement.execute();
             return dateTime;
         } catch (SQLException e) {
-            throw new MetlyException("Error on LOCK USER" + userJID + " , SQL:\n" + LOCK_STRANGER,
-                    e);
+            throw new MetlyException("Error on LOCK USER" + userJID + " , SQL:\n" + LOCK_STRANGER, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
@@ -261,14 +285,14 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             prepareStatement.setString(3, "W");
             prepareStatement.setNull(4, java.sql.Types.BIGINT);
             prepareStatement.setNull(5, java.sql.Types.VARCHAR);
-            
+
             java.sql.Timestamp dateTime = new java.sql.Timestamp(System.currentTimeMillis());
             prepareStatement.setTimestamp(6, dateTime);
             prepareStatement.setTimestamp(7, dateTime);
 
             prepareStatement.execute();
         } catch (SQLException e) {
-            throw new MetlyException("Error on saving user_statuses:" + userJID  + " , SQL:\n"
+            throw new MetlyException("Error on saving user_statuses:" + userJID + " , SQL:\n"
                     + INSERT_USER_CONNECTION_STATUSES, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
@@ -315,14 +339,15 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                 metlyUser.setName(result.getString(3));
                 metlyUser.setDOB(result.getString(4));
                 metlyUser.setGender(result.getString(5));
-                
+
                 return metlyUser;
             }
-            log.warn("No user found for key:" + userJId );
+            log.warn("No user found for key:" + userJId);
             return null;
 
         } catch (SQLException e) {
-            throw new MetlyException("Error on GET_STRANGER_USER key:" + userJId  + " , SQL:\n" + GET_MATCHED_USER_FOR_USER_JID, e);
+            throw new MetlyException("Error on GET_STRANGER_USER key:" + userJId + " , SQL:\n"
+                    + GET_MATCHED_USER_FOR_USER_JID, e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
@@ -340,9 +365,9 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             java.sql.Timestamp dateTime = new java.sql.Timestamp(System.currentTimeMillis());
             prepareStatement.setTimestamp(3, dateTime);
             prepareStatement.setTimestamp(4, dateTime);
-            
+
             prepareStatement.execute();
-            
+
         } catch (SQLException e) {
             throw new MetlyException("Error on DELETE user_statuses:" + userJID + " , SQL:\n"
                     + DELETE_USER_CONNECTION_STATUSES, e);
