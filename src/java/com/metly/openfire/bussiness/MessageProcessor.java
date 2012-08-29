@@ -150,7 +150,7 @@ public class MessageProcessor {
             }
 
         } else {
-            somethingWentWrong(packet, packet.getTo(), packet.getFrom(),
+            somethingWentWrong(packet, packet.getFrom(), packet.getTo(),
                     "You are Chatting with a Remembered user, you have to move to Stranger chat or ping to "
                             + ApplicationProperties.getProperty("metly.jid", "metly") + '@'
                             + packet.getTo().getDomain() + " to use this command");

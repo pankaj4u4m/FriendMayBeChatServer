@@ -60,7 +60,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + " u ON u.id=l.login_id JOIN "
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " s ON u.id=s.user_id WHERE user_status='W' AND s.user_id <> ? AND  TIMESTAMPDIFF(SECOND, ?, s.created_at) < "
-                        + (MAX_WAIT_TIME - 2)
+                        + (MAX_WAIT_TIME - 5)
                         + " ORDER BY POW(X(location) - ?, 2) + POW(Y(location) - ?, 2) ASC LIMIT 1000) AS r "
                         + " ORDER BY created_at ASC LIMIT 1) AS t) ";
 
@@ -70,7 +70,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + " WHERE su.user_id in (SELECT * FROM (SELECT id from "
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " WHERE user_status='W' AND user_id <> ? AND  TIMESTAMPDIFF(SECOND, ?, created_at) < "
-                        + (MAX_WAIT_TIME - 2) + " ORDER BY created_at ASC LIMIT 1) AS t) ";
+                        + (MAX_WAIT_TIME - 5) + " ORDER BY created_at ASC LIMIT 1) AS t) ";
 
         GET_MATCHED_USER_FOR_STRANGER_JID =
                 "SELECT u.id, user_jid, name, birthday, gender FROM "
@@ -121,11 +121,11 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
         if (stranger == null) {
             waitUser(userJID);
             int waitTime = 0;
-            while (waitTime < MAX_WAIT_TIME && stranger == null) {
+            while (waitTime < 2 * MAX_WAIT_TIME && stranger == null) {
                 stranger = this.getCachedMatchedStranger(userJID);
                 ++waitTime;
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     throw new MetlyException(e);
                 }
@@ -220,9 +220,10 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
     private Timestamp lockStranger(Point point, String userJID) {
         Connection connection = null;
         PreparedStatement prepareStatement = null;
+        int rand = random.nextInt(100);
         try {
             connection = DbConnectionManager.getConnection();
-            int rand = random.nextInt(100);
+
             if (rand < 50) {
                 prepareStatement = connection.prepareStatement(LOCK_STRANGER);
             } else {
@@ -253,7 +254,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
             prepareStatement.execute();
             return dateTime;
         } catch (SQLException e) {
-            throw new MetlyException("Error on LOCK USER" + userJID + " , SQL:\n" + LOCK_STRANGER, e);
+            throw new MetlyException("Error on LOCK USER" + userJID + " , SQL:\n" + (rand < 50? LOCK_STRANGER : LOCK_RANDOM_STRANGER), e);
         } finally {
             DbConnectionManager.closeConnection(prepareStatement, connection);
         }
