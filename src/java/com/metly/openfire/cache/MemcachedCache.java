@@ -6,13 +6,14 @@ import org.jivesoftware.util.JiveGlobals;
 
 import com.meetup.memcached.MemcachedClient;
 import com.meetup.memcached.SockIOPool;
+import com.metly.openfire.utils.ApplicationProperties;
 
 public class MemcachedCache implements Cache {
     private static final MemcachedClient cache = new MemcachedClient();
     static {
 
         // server list and weights
-        String[] servers = JiveGlobals.getProperties("metly.memcacheservers").toArray(new String[0]);
+        String[] servers = ApplicationProperties.getProperties("metly.memcacheservers").toArray(new String[0]);
 
         Integer[] weights = { 3, 3, 2 };
 

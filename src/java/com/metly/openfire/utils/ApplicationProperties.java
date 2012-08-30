@@ -26,6 +26,7 @@ public class ApplicationProperties {
     public static String getProperty(String property, String value) {
         String ret = PROPERTIES.getProperty(property);
         if (ret == null) {
+            PROPERTIES.setProperty(property, value);
             return value;
         }
         return ret;
