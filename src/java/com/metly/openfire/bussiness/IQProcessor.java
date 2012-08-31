@@ -55,7 +55,7 @@ public class IQProcessor {
                                 if (stranger != null) {
                                     element.addAttribute("jid", new JID(stranger.getJID()).toBareJID());
                                     element.addAttribute("name", stranger.getName());
-                                    element.addAttribute("subscription", "both");
+//                                    element.addAttribute("subscription", "both");
                                 } else {
                                     packet.setType(IQ.Type.error);
                                 }

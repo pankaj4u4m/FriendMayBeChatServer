@@ -85,6 +85,7 @@ public class MessageProcessor {
                     packet.setFrom(systemJID);
                     clientSession.process(packet);
                 }
+                
                 // acknowledge him that metlyCacheServiceClient is connected
                 packet.setTo(fromJID);
                 packet.setFrom(toJID);
@@ -141,12 +142,18 @@ public class MessageProcessor {
             // acknowledge him that metlyCacheServiceClient is connected
             packet.setTo(userJID);
             packet.setFrom(systemJID);
-
+            packet.setBody(getFormatedJSON(stranger));
+            
+            log.info("Connected with: "+ packet);
+            
             if(stranger == null){
-                packet.setBody("We are not able to connect any Stranger. Please try again!. \\c");
-                packet.setType(Message.Type.error);
+                somethingWentWrong(packet, userJID, systemJID, "We are not able to connect any Stranger. Please try again!. \\c");
             }else {
-                packet.setBody(getFormatedJSON(stranger));
+                SessionManager sessionManager = SessionManager.getInstance();
+                ClientSession clientSession = sessionManager.getSession(new JID(stranger.getJID()));
+                if(clientSession == null) {
+                    somethingWentWrong(packet, userJID, systemJID, "We are not able to connect any Stranger. Please try again!. \\c");
+                }
             }
 
         } else {
@@ -163,6 +170,7 @@ public class MessageProcessor {
         packet.setFrom(fromJID);
         packet.setType(Message.Type.error);
         packet.setBody(message);
+        metlyCacheServiceClient.clearMapping(toJID.toString());
 
     }
 
