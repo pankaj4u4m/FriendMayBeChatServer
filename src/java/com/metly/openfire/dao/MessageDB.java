@@ -10,6 +10,8 @@ import org.xmpp.packet.Message;
 import com.metly.openfire.exception.MetlyException;
 import com.metly.openfire.utils.ApplicationProperties;
 
+import de.javawi.jstun.attribute.MessageAttributeInterface.MessageAttributeType;
+
 public class MessageDB extends AbstractDB {
     private final String INSERT_NEW_MESSAGE;
 
@@ -21,6 +23,9 @@ public class MessageDB extends AbstractDB {
     }
 
     public void save(Message packet) {
+        if(packet.getType() == Message.Type.error ){
+            return;
+        }
         Connection connection = null;
         PreparedStatement prepareStatement = null;
         try {
@@ -39,9 +44,9 @@ public class MessageDB extends AbstractDB {
             }
 
             prepareStatement.setString(3, packet.getBody());
-            java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
-            prepareStatement.setDate(4, date);
-            prepareStatement.setDate(5, date);
+            java.sql.Timestamp time = new java.sql.Timestamp(System.currentTimeMillis());
+            prepareStatement.setTimestamp(4, time);
+            prepareStatement.setTimestamp(5, time);
 
             prepareStatement.execute();
         } catch (SQLException e) {

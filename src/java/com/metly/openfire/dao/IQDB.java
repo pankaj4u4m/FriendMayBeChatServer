@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.Presence;
 
 import com.metly.openfire.exception.MetlyException;
 import com.metly.openfire.utils.ApplicationProperties;
@@ -22,6 +23,9 @@ public class IQDB extends AbstractDB {
     }
 
     public void save(IQ packet) {
+        if(packet.getType() == IQ.Type.error ){
+            return;
+        }
         Connection connection = null;
         PreparedStatement prepareStatement = null;
         try {
@@ -41,9 +45,9 @@ public class IQDB extends AbstractDB {
 
             prepareStatement.setString(3, "IQ");
             prepareStatement.setString(4, packet.toString());
-            java.sql.Date date = new java.sql.Date(new java.util.Date().getTime());
-            prepareStatement.setDate(5, date);
-            prepareStatement.setDate(6, date);
+            java.sql.Timestamp time = new java.sql.Timestamp(System.currentTimeMillis());
+            prepareStatement.setTimestamp(5, time);
+            prepareStatement.setTimestamp(6, time);
 
             prepareStatement.execute();
         } catch (SQLException e) {
