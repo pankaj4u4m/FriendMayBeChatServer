@@ -40,7 +40,7 @@ public class PresenceProcessor {
                 }
             }
         }
-        this.presenceDB.save(packet);
+//        this.presenceDB.save(packet);
 
     }
 

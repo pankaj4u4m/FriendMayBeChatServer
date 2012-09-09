@@ -40,7 +40,10 @@ public class MessageProcessor {
         if (packet.getBody() == null) {
             return;
         }
-        this.messageDB.save(packet);
+        if(packet.getBody().length() > 1000){
+            somethingWentWrong(packet, packet.getFrom(), packet.getTo(), "Your message has more than 1000 characters");
+            return;
+        }
         JID to = packet.getTo();
 
         String body = packet.getBody().trim().toLowerCase();
@@ -59,6 +62,8 @@ public class MessageProcessor {
             }
         } else if (isAnonymous) {
             anonymousMessage(packet);
+        } else if(packet.getType() != Message.Type.error){
+            this.messageDB.save(packet);
         }
     }
 

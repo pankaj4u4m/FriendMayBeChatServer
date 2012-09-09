@@ -75,7 +75,7 @@ public class IQProcessor {
                 }
             }
 
-            this.iqdb.save(packet);
+//            this.iqdb.save(packet);
         } catch (Exception e) {
             log.error("IQ processing problem:" + packet, e);
         }
