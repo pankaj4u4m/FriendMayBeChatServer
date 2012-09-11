@@ -1,6 +1,6 @@
 package com.metly.openfire.plugin;
 
-import com.metly.openfire.bussiness.PacketProcessor;
+import com.metly.openfire.business.PacketProcessor;
 
 /**
  * A factory for creating PacketReceiver objects.

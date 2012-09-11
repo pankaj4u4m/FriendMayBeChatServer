@@ -100,7 +100,6 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
                         + " WHERE user_jid=? OR stranger_jid=? OR ( user_status='W' AND TIMESTAMPDIFF(SECOND, ?, created_at) > "
                         + MAX_WAIT_TIME + " ) OR TIMESTAMPDIFF(DAY, ?, updated_at) > 1";
-
     }
 
     @Override
