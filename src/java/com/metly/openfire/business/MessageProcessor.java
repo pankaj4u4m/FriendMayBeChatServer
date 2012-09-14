@@ -187,15 +187,15 @@ public class MessageProcessor {
             if(stranger.getName() != null){
                 builder.append("Name- ").append(stranger.getName()).append("\n");
             }
-            if(stranger.getDOB() != null){
-                try {
-                    int year = Calendar.getInstance().get(Calendar.YEAR);
-                    int userYear = Integer.parseInt(stranger.getDOB().split("-")[0]);
-                    builder.append("Age- ").append(year - userYear).append("\n");
-                } catch (NumberFormatException e) {
-                    log.error(e);
-                }
-            }
+//            if(stranger.getDOB() != null){
+//                try {
+//                    int year = Calendar.getInstance().get(Calendar.YEAR);
+//                    int userYear = Integer.parseInt(stranger.getDOB().split("-")[0]);
+//                    builder.append("Age- ").append(year - userYear).append("\n");
+//                } catch (NumberFormatException e) {
+//                    log.error(e);
+//                }
+//            }
             if(stranger.getGender() != null){
                 builder.append("Gender- ").append(stranger.getGender()).append("\n");
             }
