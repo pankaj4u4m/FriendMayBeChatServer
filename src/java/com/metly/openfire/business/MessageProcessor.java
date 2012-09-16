@@ -183,9 +183,21 @@ public class MessageProcessor {
         StringBuilder builder = new StringBuilder();
 
         if (stranger != null) {
-            builder.append("Now you can talk with Stranger:\n");
+            builder.append("You are now talking with:\n");
             if(stranger.getName() != null){
-                builder.append("Name- ").append(stranger.getName()).append("\n");
+                StringBuffer name = new StringBuffer();
+                boolean space = true;
+                for(int i = 0; i< stranger.getName().length(); ++i){
+                    if(stranger.getName().charAt(i) == 32){
+                        space = true;
+                    } else if(space){
+                        name.append(stranger.getName().charAt(i));
+                        space = false;
+                    } else {
+                        name.append("*");
+                    }
+                }
+                builder.append("Name- ").append(name).append("\n");
             }
 //            if(stranger.getDOB() != null){
 //                try {

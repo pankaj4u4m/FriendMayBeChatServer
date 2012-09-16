@@ -28,6 +28,8 @@ public class MetlyUserTest {
         Assert.assertEquals("metly", user.getName());
         Assert.assertEquals("C", user.getStatus());
         Assert.assertEquals("metly@localhost", user.getSystemJID());
+        
+        String name = "Pankaj asdkf d r";
 
     }
 

@@ -12,6 +12,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.xmpp.packet.JID;
 
 import com.metly.openfire.cache.Cache;
+import com.metly.openfire.cache.CacheFactory;
 import com.metly.openfire.cache.HashMapCache;
 import com.metly.openfire.exception.MetlyException;
 import com.metly.openfire.logic.MetlyServiceClient;
@@ -39,7 +40,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 
     private static final Random random = new Random();
 
-    private static final Cache cache = new HashMapCache();
+    private static final Cache cache = CacheFactory.getCache();
 
     public MetlyServiceDBClient() {
         USER_CORDINATES =

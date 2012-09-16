@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.xmpp.packet.JID;
 
 import com.metly.openfire.cache.Cache;
+import com.metly.openfire.cache.CacheFactory;
 import com.metly.openfire.cache.HashMapCache;
 
 public class MetlyCacheServiceClient implements MetlyServiceClient {
@@ -11,7 +12,7 @@ public class MetlyCacheServiceClient implements MetlyServiceClient {
 
     private MetlyServiceClient client;
 
-    private static final Cache cache = new HashMapCache();
+    private static final Cache cache = CacheFactory.getCache();
 
     public MetlyCacheServiceClient(MetlyServiceClient client) {
         this.client = client;

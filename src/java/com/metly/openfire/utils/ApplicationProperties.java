@@ -11,12 +11,12 @@ public class ApplicationProperties {
         PROPERTIES.setProperty("metly.systemJID", "metly@localhost");
         PROPERTIES.setProperty("metly.memcacheservers.host1", "localhost:20020");
         PROPERTIES.setProperty("metly.memcacheservers.host2", "localhost:20020");
-        PROPERTIES.setProperty("metly.users_db", "metly_development.users");
-        PROPERTIES.setProperty("metly.user_details_db", "metly_development.user_details");
-        PROPERTIES.setProperty("metly.stanza_archives_db", "metly_development.stanza_archives");
-        PROPERTIES.setProperty("metly.messages_archives_db", "metly_development.message_archives");
-        PROPERTIES.setProperty("metly.login_locations_db", "metly_development.login_locations");
-        PROPERTIES.setProperty("metly.user_connection_statuses_db", "metly_development.user_connection_statuses");
+        PROPERTIES.setProperty("metly.users_db", "metly_production.users");
+        PROPERTIES.setProperty("metly.user_details_db", "metly_production.user_details");
+        PROPERTIES.setProperty("metly.stanza_archives_db", "metly_production.stanza_archives");
+        PROPERTIES.setProperty("metly.messages_archives_db", "metly_production.message_archives");
+        PROPERTIES.setProperty("metly.login_locations_db", "metly_production.login_locations");
+        PROPERTIES.setProperty("metly.user_connection_statuses_db", "metly_production.user_connection_statuses");
     }
 
     public static String getProperty(String property) {
