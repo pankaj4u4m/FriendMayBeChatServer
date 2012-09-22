@@ -24,6 +24,8 @@ public class MetlyAnonymousClient extends AbstractDB implements MetlyServiceClie
     private final String USER_CORDINATES;
 
     private final String LOCK_STRANGER;
+    
+    private final String LOCK_RANDOM_STRANGER;
 
     private final String INSERT_USER_CONNECTION_STATUSES;
 
@@ -55,7 +57,14 @@ public class MetlyAnonymousClient extends AbstractDB implements MetlyServiceClie
                         + " ORDER BY POW(X(location) - ?, 2) + POW(Y(location) - ?, 2) ASC LIMIT 1000) AS r "
                         + " ORDER BY created_at ASC LIMIT 1) AS t) ";
 
-
+        LOCK_RANDOM_STRANGER =
+                "UPDATE " + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
+                        + " su SET su.user_status=?, su.stranger_id=?, su.stranger_jid=?, su.updated_at=? "
+                        + " WHERE su.id in (SELECT * FROM (SELECT id from "
+                        + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
+                        + " WHERE user_status='W' AND  TIMESTAMPDIFF(SECOND, ?, created_at) < "
+                        + (MAX_WAIT_TIME - 5) + " ORDER BY created_at ASC LIMIT 1) AS t) ";
+        
         GET_MATCHED_USER_FOR_STRANGER_JID =
                 "SELECT user_jid FROM "
                         + ApplicationProperties.getProperty("metly.user_connection_statuses_db")
@@ -123,7 +132,10 @@ public class MetlyAnonymousClient extends AbstractDB implements MetlyServiceClie
         if (point != null) {
             lockDateTime = this.lockStranger(point, userJID);
         }
-        if (lockDateTime == null) {
+        if(lockDateTime == null ) {
+            lockDateTime = this.lockRandomStranger(userJID);
+        }
+        if(lockDateTime == null){
             return null;
         }
         MetlyUser stranger = getMatchedUserForStrangerJID(userJID, lockDateTime);
@@ -244,6 +256,43 @@ public class MetlyAnonymousClient extends AbstractDB implements MetlyServiceClie
         }
     }
 
+    private Timestamp lockRandomStranger(String userJID) {
+        Connection connection = null;
+        PreparedStatement prepareStatement = null;
+        try {
+            connection = DbConnectionManager.getConnection();
+
+            prepareStatement = connection.prepareStatement(LOCK_RANDOM_STRANGER);
+
+            prepareStatement.setString(1, "C");
+
+            Long userId;
+            if ((userId = this.getUserId(new JID(userJID))) != null) {
+                prepareStatement.setLong(2, userId);
+            } else {
+                prepareStatement.setNull(2, java.sql.Types.BIGINT);
+
+            }
+
+            prepareStatement.setString(3, userJID);
+
+            java.sql.Timestamp dateTime = new java.sql.Timestamp(System.currentTimeMillis());
+            prepareStatement.setTimestamp(4, dateTime);
+            prepareStatement.setTimestamp(5, dateTime);
+            
+            log.info("LOCK_RANDOM_STRANGER:" + prepareStatement);
+            
+            int updated = prepareStatement.executeUpdate();
+            if(updated > 0){
+                return dateTime;
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new MetlyException("Error on LOCK USER" + userJID + " , SQL:\n" + prepareStatement, e);
+        } finally {
+            DbConnectionManager.closeConnection(prepareStatement, connection);
+        }
+    }
     private MetlyUser getCachedMatchedStranger(String matchedKey) {
         Object get = cache.get(matchedKey);
         if (get == null) {
