@@ -12,6 +12,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.metly.openfire.dao.MessageDB;
+import com.metly.openfire.dao.MetlyAnonymousClient;
 import com.metly.openfire.dao.MetlyServiceDBClient;
 import com.metly.openfire.exception.MetlyHappyException;
 import com.metly.openfire.logic.MetlyCacheServiceClient;
@@ -28,6 +29,8 @@ public class MessageProcessor {
 
     private static final MetlyCacheServiceClient metlyCacheServiceClient = new MetlyCacheServiceClient(
             new MetlyServiceDBClient());
+    private static final MetlyCacheServiceClient metlyCacheAnonymousServiceClient = new MetlyCacheServiceClient(
+            new MetlyAnonymousClient());
     
     private final JID systemJID;
 
@@ -37,17 +40,19 @@ public class MessageProcessor {
     }
 
     public void process(Message packet) {
-        if (packet.getBody() == null) {
-            return;
-        }
-        if(packet.getBody().length() > 1000){
+        
+        if(packet.getBody() != null && packet.getBody().length() > 1000){
             somethingWentWrong(packet, packet.getFrom(), packet.getTo(), "Your message has more than 1000 characters");
             return;
         }
         JID to = packet.getTo();
-
-        String body = packet.getBody().trim().toLowerCase();
         boolean isAnonymous = to.equals(systemJID);
+        
+        String body = "";
+        if(packet.getBody() != null){
+            body = packet.getBody().trim().toLowerCase();
+        }
+        
         boolean isCommand = Commands.isCommand(body);
         log.info("isAnonymous:" + isAnonymous + " isCommand: " + isCommand);
 
@@ -75,7 +80,13 @@ public class MessageProcessor {
 
         if (isAnonymous) {
             packet.setBody(" -User has Disconnected");
-            MetlyUser stranger = metlyCacheServiceClient.getMatchedStranger(fromJID.toString());
+            
+            MetlyUser stranger = null;
+            if(fromJID.getNode().equals(fromJID.getResource())){
+                stranger  = metlyCacheAnonymousServiceClient.getMatchedStranger(fromJID.toString());
+            } else {
+                stranger = metlyCacheServiceClient.getMatchedStranger(fromJID.toString());
+            }
             if (stranger != null) {
                 JID strangerJID = new JID(stranger.getJID());
 
@@ -98,8 +109,11 @@ public class MessageProcessor {
             } else {
                 somethingWentWrong(packet, fromJID, systemJID, " -You are already disconnected from Stranger. Try \\c");
             }
-            
-            metlyCacheServiceClient.clearMapping(fromJID.toString());
+            if(fromJID.getNode().equals(fromJID.getResource())){
+                metlyCacheAnonymousServiceClient.clearMapping(fromJID.toString());
+            } else {
+                metlyCacheServiceClient.clearMapping(fromJID.toString());
+            }
         } else {
             
             // acknowledge him that metlyCacheServiceClient is connected
@@ -111,7 +125,12 @@ public class MessageProcessor {
 
     private void anonymousMessage(Message packet) {
         JID userJID = packet.getFrom(); 
-        MetlyUser stranger = metlyCacheServiceClient.getMatchedStranger(userJID.toString());
+        MetlyUser stranger = null;
+        if(userJID.getNode().equals(userJID.getResource())){
+            stranger = metlyCacheAnonymousServiceClient.getMatchedStranger(userJID.toString());
+        } else {
+            stranger = metlyCacheServiceClient.getMatchedStranger(userJID.toString());
+        }
         if (stranger != null) {
             JID strangerJID = new JID(stranger.getJID());
 
@@ -142,8 +161,12 @@ public class MessageProcessor {
         if (isAnonymous) {
             JID userJID = packet.getFrom();
 
-            MetlyUser stranger = metlyCacheServiceClient.getNewStranger(userJID.toString());
-
+            MetlyUser stranger = null;
+            if(userJID.getNode().equals(userJID.getResource())){
+                stranger = metlyCacheAnonymousServiceClient.getNewStranger(userJID.toString());
+            } else {
+                stranger = metlyCacheServiceClient.getNewStranger(userJID.toString());
+            }
             // acknowledge him that metlyCacheServiceClient is connected
             packet.setTo(userJID);
             packet.setFrom(systemJID);
@@ -175,7 +198,11 @@ public class MessageProcessor {
         packet.setFrom(fromJID);
         packet.setType(Message.Type.error);
         packet.setBody(message);
-        metlyCacheServiceClient.clearMapping(toJID.toString());
+        if(toJID.getNode().equals(toJID.getResource())){
+            metlyCacheAnonymousServiceClient.clearMapping(toJID.toString());
+        } else {
+            metlyCacheServiceClient.clearMapping(toJID.toString());
+        }
 
     }
 
@@ -183,22 +210,22 @@ public class MessageProcessor {
         StringBuilder builder = new StringBuilder();
 
         if (stranger != null) {
-            builder.append("You are now talking with:\n");
-            if(stranger.getName() != null){
-                StringBuffer name = new StringBuffer();
-                boolean space = true;
-                for(int i = 0; i< stranger.getName().length(); ++i){
-                    if(stranger.getName().charAt(i) == 32){
-                        space = true;
-                    } else if(space){
-                        name.append(stranger.getName().charAt(i));
-                        space = false;
-                    } else {
-                        name.append("*");
-                    }
-                }
-                builder.append("Name- ").append(name).append("\n");
-            }
+            builder.append("You are now talking with Stranger:\n");
+//            if(stranger.getName() != null){
+//                StringBuffer name = new StringBuffer();
+//                boolean space = true;
+//                for(int i = 0; i< stranger.getName().length(); ++i){
+//                    if(stranger.getName().charAt(i) == 32){
+//                        space = true;
+//                    } else if(space){
+//                        name.append(stranger.getName().charAt(i));
+//                        space = false;
+//                    } else {
+//                        name.append("*");
+//                    }
+//                }
+//                builder.append("Name- ").append(name).append("\n");
+//            }
 //            if(stranger.getDOB() != null){
 //                try {
 //                    int year = Calendar.getInstance().get(Calendar.YEAR);
@@ -209,7 +236,7 @@ public class MessageProcessor {
 //                }
 //            }
             if(stranger.getGender() != null){
-                builder.append("Gender- ").append(stranger.getGender()).append("\n");
+                builder.append("Gender - ").append(stranger.getGender()).append("\n");
             }
         }
         return builder.toString();

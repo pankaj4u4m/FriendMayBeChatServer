@@ -11,12 +11,15 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.metly.openfire.dao.IQDB;
+import com.metly.openfire.dao.MetlyAnonymousClient;
 import com.metly.openfire.dao.MetlyServiceDBClient;
+import com.metly.openfire.exception.MetlyHappyException;
 import com.metly.openfire.logic.MetlyCacheServiceClient;
 import com.metly.openfire.logic.MetlyUser;
 import com.metly.openfire.utils.ApplicationProperties;
@@ -51,13 +54,21 @@ public class IQProcessor {
                             String to = element.attributeValue("jid");
 //                            String subscription = element.attributeValue("subscription");
                             if (to != null && to.equals(systemJID)) {
-                                MetlyUser stranger = metlyCacheServiceClient.getMatchedStranger(userJID.toString());
+                                MetlyUser stranger = null;
+                                if(!userJID.getNode().equals(userJID.getResource())){
+                                    stranger = metlyCacheServiceClient.getMatchedStranger(userJID.toString());
+                                }
                                 if (stranger != null) {
-                                    element.addAttribute("jid", new JID(stranger.getJID()).toBareJID());
+                                    JID jid = new JID(stranger.getJID());
+                                    if(!jid.getNode().equals(jid.getResource())) {
+                                        element.addAttribute("jid", jid.toBareJID());
+                                    } else {
+                                        throw new MetlyHappyException("Sending request to anonymous");
+                                    }
 //                                    element.addAttribute("name", stranger.getName());
 //                                    element.addAttribute("subscription", "both");
                                 } else {
-                                    packet.setType(IQ.Type.error);
+                                    throw new MetlyHappyException("Sending request to anonymous");
                                 }
                             } 
 //                            else if(subscription != null && subscription.equals("remove") && to != null){

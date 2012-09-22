@@ -5,8 +5,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
+import com.metly.openfire.dao.MetlyAnonymousClient;
 import com.metly.openfire.dao.MetlyServiceDBClient;
 import com.metly.openfire.dao.PresenceDB;
+import com.metly.openfire.exception.MetlyHappyException;
 import com.metly.openfire.logic.MetlyCacheServiceClient;
 import com.metly.openfire.logic.MetlyUser;
 import com.metly.openfire.utils.ApplicationProperties;
@@ -18,7 +20,7 @@ public class PresenceProcessor {
 
     private static final MetlyCacheServiceClient metlyCacheServiceClient = new MetlyCacheServiceClient(
             new MetlyServiceDBClient());
-
+    
     private final String systemJID;
 
     public PresenceProcessor() {
@@ -31,12 +33,20 @@ public class PresenceProcessor {
         if (toJID != null && toJID.toString().equals(systemJID)) {
             JID userJID = packet.getFrom();
             if (userJID != null) {
-                MetlyUser stranger = metlyCacheServiceClient.getMatchedStranger(userJID.toString());
+                MetlyUser stranger = null;
+                if(!userJID.getNode().equals(userJID.getResource())){
+                    stranger = metlyCacheServiceClient.getMatchedStranger(userJID.toString());
+                }
 //          log.info("user:" + MetlyUser.getJSONString(stranger));
                 if (stranger != null) {
-                    packet.setTo(new JID(stranger.getJID()).toBareJID());
+                    JID jid = new JID(stranger.getJID());
+                    if(!jid.getNode().equals(jid.getResource())){
+                        packet.setTo(jid.toBareJID());
+                    } else {
+                        throw new MetlyHappyException("Sending request to anonymous");
+                    }
                 } else {
-                    packet.setType(Presence.Type.error);
+                    throw new MetlyHappyException("Sending request to anonymous");
                 }
             }
         }

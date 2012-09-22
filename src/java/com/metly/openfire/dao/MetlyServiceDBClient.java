@@ -32,8 +32,6 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 
     private final String GET_MATCHED_STRANGER_FOR_USER_JID;
 
-    private final int MAX_WAIT_TIME = 20;
-
     private final String GET_MATCHED_USER_FOR_STRANGER_JID;
 
     private final String LOCK_RANDOM_STRANGER;
@@ -42,6 +40,10 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 
     private static final Cache cache = CacheFactory.getCache();
 
+    private final int MAX_WAIT_TIME = 20;
+    
+    private MetlyAnonymousClient metlyAnonymousClient = new MetlyAnonymousClient();
+    
     public MetlyServiceDBClient() {
         USER_CORDINATES =
                 "SELECT X(location), Y(location) FROM "
@@ -124,17 +126,19 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
         }
         MetlyUser stranger = this.matchUser(userJID);
         if (stranger == null) {
-            this.waitUser(userJID);
-            int waitTime = 0;
-            while (waitTime < 2 * MAX_WAIT_TIME && stranger == null) {
-                stranger = this.getCachedMatchedStranger(userJID);
-                ++waitTime;
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new MetlyException(e);
-                }
-            }
+            stranger = metlyAnonymousClient.getNewStranger(userJID);
+            //removed because it will wait there
+//            this.waitUser(userJID);
+//            int waitTime = 0;
+//            while (waitTime < 2 * MAX_WAIT_TIME && stranger == null) {
+//                stranger = this.getCachedMatchedStranger(userJID);
+//                ++waitTime;
+//                try {
+//                    Thread.sleep(500);
+//                } catch (InterruptedException e) {
+//                    throw new MetlyException(e);
+//                }
+//            }
         }
         return stranger;
     }
