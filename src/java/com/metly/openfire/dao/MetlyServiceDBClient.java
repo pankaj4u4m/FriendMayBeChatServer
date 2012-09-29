@@ -76,7 +76,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + (MAX_WAIT_TIME - 5) + " ORDER BY created_at ASC LIMIT 1) AS t) ";
 
         GET_MATCHED_USER_FOR_STRANGER_JID =
-                "SELECT u.id, user_jid, name, birthday, gender FROM "
+                "SELECT u.id, user_jid, u.name, birthday, gender FROM "
                         + ApplicationProperties.getProperty("metly.users_db")
                         + " u JOIN "
                         + ApplicationProperties.getProperty("metly.user_details_db")
@@ -85,7 +85,7 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
                         + " s ON u.id=s.user_id WHERE user_status='C' AND stranger_jid=? AND s.updated_at=? ORDER BY s.created_at DESC LIMIT 1";
 
         GET_MATCHED_STRANGER_FOR_USER_JID =
-                "SELECT u.id, stranger_jid, name, birthday, gender FROM "
+                "SELECT u.id, stranger_jid, u.name, birthday, gender FROM "
                         + ApplicationProperties.getProperty("metly.users_db")
                         + " u JOIN "
                         + ApplicationProperties.getProperty("metly.user_details_db")
