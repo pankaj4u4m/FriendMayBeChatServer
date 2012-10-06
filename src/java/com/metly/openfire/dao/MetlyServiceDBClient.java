@@ -107,13 +107,6 @@ public class MetlyServiceDBClient extends AbstractDB implements MetlyServiceClie
 
     @Override
     public MetlyUser getNewStranger(String userJID) {
-        MetlyUser matchedStranger = this.getCachedMatchedStranger(userJID);
-        if(matchedStranger == null ){
-            matchedStranger = this.getMatchedStranger(userJID);
-        }
-        if (matchedStranger != null) {
-            return matchedStranger;
-        }
         try {
             Object get = cache.get(userJID);
             if (get != null && !get.equals("null")) {
